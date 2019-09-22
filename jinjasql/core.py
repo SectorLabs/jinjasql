@@ -46,7 +46,7 @@ class SqlExtension(Extension):
 
     def filter_stream(self, stream):
         """
-        We convert 
+        We convert
         {{ some.variable | filter1 | filter 2}}
             to 
         {{ ( some.variable | filter1 | filter 2 ) | bind}}
@@ -57,7 +57,7 @@ class SqlExtension(Extension):
         The parentheses are mostly redundant, except in expressions like {{ '%' ~ myval ~ '%' }}
 
         This function is called by jinja2 immediately 
-        after the lexing stage, but before the parser is called. 
+        after the lexing stage, but before the parser is called.
         """
         while not stream.eos:
             token = next(stream)
@@ -71,7 +71,7 @@ class SqlExtension(Extension):
                 last_token = var_expr[-1]
                 lineno = last_token.lineno
                 # don't bind twice
-                if (not last_token.test("name") 
+                if (not last_token.test("name")
                     or not last_token.value in ('bind', 'inclause', 'sqlsafe')):
                     param_name = self.extract_param_name(var_expr)
                     
@@ -120,7 +120,7 @@ def _bind_param(already_bound, key, value):
     _thread_local.param_index += 1
     new_key = "%s_%s" % (key, _thread_local.param_index)
     already_bound[new_key] = value
-    
+
     param_style = _thread_local.param_style
     if param_style == 'qmark':
         return "?"
