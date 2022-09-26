@@ -3,9 +3,9 @@ import unittest
 from jinja2 import DictLoader
 from jinja2 import Environment
 from jinjasql import JinjaSql
-from jinjasql.core import MissingInClauseException, InvalidBindParameterException
+from jinjasql.core import InvalidBindParameterException
 from datetime import date
-from yaml import load_all
+from yaml import safe_load_all
 from os.path import dirname, abspath, join
 
 
@@ -37,11 +37,6 @@ class JinjaSqlTest(unittest.TestCase):
     def setUp(self):
         self.j = JinjaSql()
 
-    def test_missed_inclause_raises_exception(self):
-        source = """select * from timesheet 
-                    where day in {{request.days}}"""
-        self.assertRaises(MissingInClauseException, self.j.prepare_query, source, _DATA)
-
     def test_import(self):
         utils = """
         {% macro print_where(value) -%}
@@ -58,9 +53,9 @@ class JinjaSqlTest(unittest.TestCase):
         j = JinjaSql(env)
         query, bind_params = j.prepare_query(source, _DATA)
         expected_query = "select * from dual WHERE dummy_col = %s"
-        self.assertEquals(query.strip(), expected_query.strip())
-        self.assertEquals(len(bind_params), 1)
-        self.assertEquals(list(bind_params)[0], 100)
+        self.assertEqual(query.strip(), expected_query.strip())
+        self.assertEqual(len(bind_params), 1)
+        self.assertEqual(list(bind_params)[0], 100)
 
     def test_include(self):
         where_clause = """where project_id = {{request.project_id}}"""
@@ -74,9 +69,53 @@ class JinjaSqlTest(unittest.TestCase):
         j = JinjaSql(env)
         query, bind_params = j.prepare_query(source, _DATA)
         expected_query = "select * from dummy where project_id = %s"
-        self.assertEquals(query.strip(), expected_query.strip())
-        self.assertEquals(len(bind_params), 1)
-        self.assertEquals(list(bind_params)[0], 123)
+        self.assertEqual(query.strip(), expected_query.strip())
+        self.assertEqual(len(bind_params), 1)
+        self.assertEqual(list(bind_params)[0], 123)
+
+    def test_precompiled_template(self):
+        source = "select * from dummy where project_id = {{ request.project_id }}"
+        j = JinjaSql()
+        query, bind_params = j.prepare_query(j.env.from_string(source), _DATA)
+        expected_query = "select * from dummy where project_id = %s"
+        self.assertEqual(query.strip(), expected_query.strip())
+
+    def test_large_inclause(self):
+        num_of_params = 50000
+        alphabets = ['A'] * num_of_params
+        source = "SELECT 'x' WHERE 'A' in {{alphabets | inclause}}"
+        j = JinjaSql()
+        query, bind_params = j.prepare_query(source, {"alphabets": alphabets})
+        self.assertEqual(len(bind_params), num_of_params)
+        self.assertEqual(query, "SELECT 'x' WHERE 'A' in (" + "%s," * (num_of_params - 1) + "%s)")
+
+    def test_identifier_filter(self):
+        j = JinjaSql()
+        template = 'select * from {{table_name | identifier}}'
+        
+        tests = [
+            ('users', 'select * from "users"'),
+            (('myschema', 'users'), 'select * from "myschema"."users"'),
+            ('a"b', 'select * from "a""b"'),
+            (('users',), 'select * from "users"'),
+        ]
+        for test in tests:
+            query, _ = j.prepare_query(template, {'table_name': test[0]})
+            self.assertEqual(query, test[1])
+
+
+    def test_identifier_filter_backtick(self):
+        j = JinjaSql(identifier_quote_character='`')
+        template = 'select * from {{table_name | identifier}}'
+        
+        tests = [
+            ('users', 'select * from `users`'),
+            (('myschema', 'users'), 'select * from `myschema`.`users`'),
+            ('a`b', 'select * from `a``b`'),
+        ]
+        for test in tests:
+            query, _ = j.prepare_query(template, {'table_name': test[0]})
+            self.assertEqual(query, test[1])
 
     def test_precompiled_template(self):
         source = "select * from dummy where project_id = {{ request.project_id }}"
@@ -90,7 +129,7 @@ class JinjaSqlTest(unittest.TestCase):
 def generate_yaml_tests():
     file_path = join(YAML_TESTS_ROOT, "macros.yaml")
     with open(file_path) as f:
-        configs = load_all(f)
+        configs = safe_load_all(f)
         for config in configs:
             yield (config['name'], _generate_test(config))
 
@@ -106,9 +145,9 @@ def _generate_test(config):
                     expected_params = config['expected_params']['as_dict']
                 else:
                     expected_params = config['expected_params']['as_list']
-                self.assertEquals(list(bind_params), expected_params)
+                self.assertEqual(list(bind_params), expected_params)
 
-            self.assertEquals(query.strip(), expected_sql.strip())
+            self.assertEqual(query.strip(), expected_sql.strip())
 
     return yaml_test
 

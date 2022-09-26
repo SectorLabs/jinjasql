@@ -1,3 +1,32 @@
+name: test_asyncpg_format
+template: >
+    SELECT project, timesheet, hours
+    FROM timesheet
+    WHERE project_id = {{request.project_id}} 
+    and user_id = {{ session.user_id }}
+expected_sql: 
+    asyncpg: >
+        SELECT project, timesheet, hours
+        FROM timesheet
+        WHERE project_id = $1 
+        and user_id = $2
+expected_params:
+    as_list: [123, 'sripathi']
+    
+---
+name: test_string_contatenation
+template: >
+    SELECT *
+    FROM users
+    WHERE user_name like {{ '%' ~ session.user_id ~ '%' }}
+expected_sql: 
+    format: >
+        SELECT *
+        FROM users
+        WHERE user_name like %s
+expected_params:
+    as_list: ['%sripathi%']
+
 ---
 name: test_bind_parameters
 template: >
@@ -41,12 +70,12 @@ expected_sql:
     numeric: >
         select * from timesheet 
         where day in (:1,:2,:3,:4,:5)
-    numeric: >
+    named: >
         select * from timesheet 
-        where day in (:1,:2,:3,:4,:5)
-    numeric: >
+        where day in (:inclause_1,:inclause_2,:inclause_3,:inclause_4,:inclause_5)
+    pyformat: >
         select * from timesheet 
-        where day in (:1,:2,:3,:4,:5)
+        where day in (%(inclause_1)s,%(inclause_2)s,%(inclause_3)s,%(inclause_4)s,%(inclause_5)s)
 ---
 name: test_macros
 template: >

@@ -1,6 +1,6 @@
 # Generate SQL Queries using a Jinja Template, without worrying about SQL Injection #
 
-[![Build Status](https://travis-ci.org/hashedin/jinjasql.svg?branch=master)](https://travis-ci.org/hashedin/jinjasql)
+[![Github Actions Build Status](https://github.com/sripathikrishnan/jinjasql/workflows/Tests/badge.svg)](https://github.com/sripathikrishnan/jinjasql/actions)
 
 JinjaSQL is a template language for SQL statements and scripts. 
 Since it's based in [Jinja2](http://jinja.pocoo.org/), 
@@ -11,7 +11,7 @@ JinjaSQL automatically binds parameters that are inserted into the template.
 After JinjaSQL evaluates the template, you get:
 
 1. A Query with %s placeholders for the parameters
-2. A List of values corresponding to the placeholdersthat need to be bound to the query
+2. A List of values corresponding to the placeholders that need to be bound to the query
 
 JinjaSQL doesn't actually execute the query - it only prepares the 
 query and the bind parameters. You can execute the query using any 
@@ -138,11 +138,12 @@ Per [PEP-249](https://www.python.org/dev/peps/pep-0249/), bind parameters can be
 You can pass the optional constructor argument `param_style` to control
 the style of query parameter.
 
-1. **format* : `... where name = %s`. This is the default
+1. **format** : `... where name = %s`. This is the default
 1. **qmark** :  `where name = ?`
 1. **numeric** : `where name = :1 and last_name = :2`
 1. **named** : `where name = :name and last_name = :last_name`
 1. **pyformat** : `where name = %(name)s and last_name = %(last_name)s`
+1. **asyncpg** : `where name = $1 and last_name = $2`. This is not part of PEP-249 standard, but is used by [asyncpg library for postgres](https://magicstack.github.io/asyncpg/current/usage.html)
 
 Here's how it works - 
 
@@ -197,7 +198,7 @@ To install from PyPI (recommended) :
     
 To install from source : 
 
-    git clone https://github.com/hashedin/jinjasql
+    git clone https://github.com/sripathikrishnan/jinjasql
     cd jinjasql
     sudo python setup.py install
 
@@ -240,8 +241,17 @@ JinjaSQL builds on this functionality. JinjaSQL requires autoescape to be turned
 
 ## License
 
-jinjasql is licensed under the MIT License. See [LICENSE](https://github.com/hashedin/jinjasql/blob/master/LICENSE)
+jinjasql is licensed under the MIT License. See [LICENSE](https://github.com/sripathikrishnan/jinjasql/blob/master/LICENSE)
 
-## Copyright 
 
-(c) 2016 HashedIn Technologies Pvt. Ltd.
+## Developer Notes
+
+JinjaSQL runs tests against a variety of databases and database drivers. It uses the testcontainers project to launch databases in docker containers.
+
+To setup your development environment and run the tests on an ubuntu machine:
+
+```bash
+sudo apt-get install gcc g++ python3-dev unixodbc unixodbc-dev 
+pip install -r requirements.txt
+python run_tests
+```
