@@ -38,6 +38,7 @@ sdict = {
     'license' : 'MIT',
     'packages' : ['jinjasql'],
     'test_suite' : 'tests.all_tests',
+    'python_requires': '>=3.8',
     'install_requires': [
         'Jinja2>=2.5,<4.0',
         'markupsafe>=2.0,<=4',
