@@ -1,9 +1,12 @@
 from __future__ import unicode_literals
+
+import jinja2
+
 from jinja2 import Environment
 from jinja2 import Template
 from jinja2.ext import Extension
 from jinja2.lexer import Token
-from jinja2.utils import Markup
+from markupsafe import Markup
 from collections.abc import Iterable
 
 try:
@@ -192,7 +195,8 @@ class JinjaSql(object):
     def _prepare_environment(self):
         self.env.autoescape = True
         self.env.add_extension(SqlExtension)
-        self.env.add_extension('jinja2.ext.autoescape')
+        if jinja2.__version__.startswith('2'):
+            self.env.add_extension('jinja2.ext.autoescape')
         self.env.filters["bind"] = bind
         self.env.filters["sqlsafe"] = sql_safe
         self.env.filters["inclause"] = bind_in_clause
