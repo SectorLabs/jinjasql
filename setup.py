@@ -39,7 +39,8 @@ sdict = {
     'packages' : ['jinjasql'],
     'test_suite' : 'tests.all_tests',
     'install_requires': [
-        'Jinja2>=2.5,<3.0'
+        'Jinja2>=2.5,<4.0',
+        'markupsafe>=2.0,<=4',
     ],
     'classifiers' : [
         'Development Status :: 4 - Beta',
