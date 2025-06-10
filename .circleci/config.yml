@@ -2,13 +2,13 @@ version: 2
 jobs:
   release:
     docker:
-      - image: python:3.8-buster
+      - image: python:3.11-bullseye
     steps:
       - checkout
 
       - run:
           name: Install Python build/publishing tools
-          command: pip install build==0.8.0 twine==4.0.1
+          command: pip install build==1.2.2.post1 twine==6.1.0
 
       - run:
           name: Build package
